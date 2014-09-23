@@ -1,0 +1,12 @@
+{application, emysql_wrapper,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { emysql_wrapper_app, []}},
+  {env, []}
+ ]}.

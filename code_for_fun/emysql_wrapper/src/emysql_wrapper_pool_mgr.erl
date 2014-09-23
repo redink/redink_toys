@@ -4,27 +4,26 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 15 Jul 2014 by redink <cnredink@gmail.com>
+%%% Created by redink <cnredink@gmail.com>
 %%%-------------------------------------------------------------------
--module(waiting_queue_normal).
+-module(emysql_wrapper_pool_mgr).
 
 -behaviour(gen_server).
 
+-include("emysql_wrapper.hrl").
+
 %% API
--export([start_link/2]).
--export([start_link/3]).
+-export([start_link/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--define(SERVER, ?MODULE).
+-export([new_pool/1, drop_pool/1, info_pool/1]).
 
--define(HIBERNATE_TIMEOUT, 10000).
+-define(SERVER, ?MODULE). 
 
--record(state, {max_num = 10,
-                waiting_queue = queue:new(),
-                time_interval = 60000}).
+-record(state, {}).
 
 %%%===================================================================
 %%% API
@@ -37,11 +36,25 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(MaxNum, TimeInterval) ->
-    gen_server:start_link(?MODULE, [MaxNum, TimeInterval], []).
 
-start_link(ProcessName, MaxNum, TimeInterval) ->
-    gen_server:start_link({local, ProcessName}, ?MODULE, [MaxNum, TimeInterval], []).
+new_pool(PoolMeta) ->
+    gen_server:call(?SERVER, {new_pool, PoolMeta}).
+
+drop_pool(PoolName) ->
+    gen_server:call(?SERVER, {drop_pool, PoolName}).
+
+info_pool(PoolName) ->
+    case catch ets:lookup(pool_info, PoolName) of
+        [] ->
+            {error, noexit};
+        [{PoolName, _, DBIP, DBport}] ->
+            {PoolName, [DBIP, DBport]};
+        _ ->
+            {error, noexit}
+    end.
+
+start_link() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -58,8 +71,9 @@ start_link(ProcessName, MaxNum, TimeInterval) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([MaxNum, TimeInterval]) ->
-    {ok, #state{max_num = MaxNum, time_interval = TimeInterval}, ?HIBERNATE_TIMEOUT}.
+init([]) ->
+    ets:new(pool_info, [named_table]),
+    {ok, #state{}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -75,8 +89,60 @@ init([MaxNum, TimeInterval]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({new_pool, PoolMeta}, _, State) ->
+    PoolName = get_keylist_val(<<"poolname">>, PoolMeta, ?MS_DB_POOL_NAME),
+    DBIP   = get_keylist_val(<<"dbip">>, PoolMeta, ?MS_DB_IP),
+    DBport = get_keylist_val(<<"dbport">>, PoolMeta, ?MS_DB_PORT),
+
+    case ets:lookup(pool_info, PoolName) of
+        [] ->
+            A =
+                supervisor:start_child(emysql_wrapper_pool_sup, 
+                                       [PoolName, 1, 1,
+                                        DBIP,
+                                        DBport,
+                                        get_keylist_val(<<"dbuser">>    , PoolMeta, ?MS_DB_USER    ),
+                                        get_keylist_val(<<"dbpassword">>, PoolMeta, ?MS_DB_PASSWORD),
+                                        get_keylist_val(<<"dbdatabase">>, PoolMeta, ?MS_DB_DATABASE),
+                                        get_keylist_val(<<"dbchst">>    , PoolMeta, ?MS_DB_CHST    )
+                                       ]),
+            ets:insert(pool_info, {PoolName, A, DBIP, DBport}),
+            {reply, A, State};
+        [{PoolName, _, _, _}] ->
+            {reply, repeat, State};
+        _ ->
+            {reply, error, State}
+    end;
+
+handle_call({drop_pool, {PoolName, DBIP, DBport}}, _, State) ->
+    case catch ets:lookup(pool_info, PoolName) of
+        [] ->
+            {reply, ok, State};
+        [{PoolName, _, DBIP, DBport}] ->
+            {reply, ok, State};
+        [{PoolName, _, _, _}] ->
+            catch gen_server:call(erlang:list_to_atom(PoolName), stop),
+            ets:delete(pool_info, PoolName),
+            {reply, ok, State};
+        _ ->
+            {reply, ok, State}
+    end;
+
+handle_call({drop_pool, PoolName}, _, State) ->
+    case catch ets:lookup(pool_info, PoolName) of
+        [] ->
+            {reply, ok, State};
+        [{PoolName, _, _, _}] ->
+            catch gen_server:stop(erlang:list_to_atom(PoolName), stop),
+            ets:delete(pool_info, PoolName),
+            {reply, ok, State};
+        _ ->
+            {reply, ok, State}
+    end;
+
 handle_call(_Request, _From, State) ->
-    {reply, ok, State, ?HIBERNATE_TIMEOUT}.
+    Reply = ok,
+    {reply, Reply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -88,25 +154,8 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({push, OriginPid, Msg}, #state{max_num = 0, 
-                                           waiting_queue = WaitingQueue} = State) ->
-    erlang:monitor(process, OriginPid),
-    NewState = State#state{waiting_queue = queue:in({OriginPid, Msg}, WaitingQueue)},
-    {noreply, NewState, ?HIBERNATE_TIMEOUT};
-
-handle_cast({push, OriginPid, Msg}, #state{max_num = MaxNum, 
-                                            time_interval = TimeInterval} = State) ->
-    
-    %% do something operation
-    queue_handle(OriginPid, Msg),
-
-    %% send after 60s, tell the queue seed will active
-    erlang:send_after(TimeInterval, erlang:self(), {active}),
-    NewState = State#state{max_num = MaxNum - 1},
-    {noreply, NewState, ?HIBERNATE_TIMEOUT};
-
 handle_cast(_Msg, State) ->
-    {noreply, State, ?HIBERNATE_TIMEOUT}.
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -118,45 +167,8 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({active}, #state{max_num = MaxNum,
-                             time_interval = TimeInterval,
-                             waiting_queue = WaitingQueue} = State) ->
-    case queue:out(WaitingQueue) of
-        {{value, {OriginPid, Msg}}, NewWaitingQueue} ->
-            case erlang:is_process_alive(OriginPid) of
-                true ->
-                    %% do something operations
-                    queue_handle(OriginPid, Msg),
-
-                    erlang:send_after(TimeInterval, erlang:self(), {active}),
-                    
-                    {noreply, State#state{max_num = MaxNum,
-                                          waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT};
-                _ ->
-                    {noreply, State#state{max_num = MaxNum + 1,
-                                          waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT}
-            end;
-        {empty, NewWaitingQueue} ->
-            {noreply, State#state{max_num = MaxNum + 1,
-                                  waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT}
-    end;
-
-handle_info({'DOWN', MonitorRef, process, OriginPid, _Reason}, 
-            #state{waiting_queue = WaitingQueue} = State) ->
-    erlang:demonitor(MonitorRef, [flush]),
-    NewWaitingQueue = queue:filter(fun(X) -> 
-                                        erlang:element(1, X) =/= OriginPid 
-                                   end, 
-                                  WaitingQueue),
-    {noreply, State#state{waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT};
-
-handle_info(timeout, State) ->
-    proc_lib:hibernate(gen_server, enter_loop,
-               [?MODULE, [], State]),
-    {noreply, State, ?HIBERNATE_TIMEOUT};
-
 handle_info(_Info, State) ->
-    {noreply, State, ?HIBERNATE_TIMEOUT}.
+    {noreply, State}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -181,15 +193,16 @@ terminate(_Reason, _State) ->
 %% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
-    {ok, State, ?HIBERNATE_TIMEOUT}.
+    {ok, State}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
-queue_handle(OriginPid, {Fun, Args}) when erlang:is_function(Fun) ->
-    erlang:apply(Fun, Args);
-
-queue_handle(OriginPid, Msg) ->
-    io:format("------------origin pid  ~p, msg ~p ~n", [OriginPid, Msg]).
-
+get_keylist_val(Key, KeyList, Default) ->
+    case catch lists:keyfind(Key, 1, KeyList) of
+        {Key, Value} ->
+            Value;
+        _ ->
+            Default
+    end.

@@ -10,7 +10,9 @@
 -module(waiting_queue).
 
 -export([create_queue/3,
-         create_queue/4]).
+         create_queue/4,
+         create_normal_queue/3,
+         create_normal_queue/2]).
 
 -export([route_queue/2]).
 
