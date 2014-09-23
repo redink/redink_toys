@@ -25,7 +25,7 @@ start_link() ->
 init([]) ->
     WaitingQueueNormalSup = 
         {waiting_queue_normal_sup, 
-             {waiting_queue_tmp_sup, start_link, [waiting_queue_normal_sup, waiting_queue_meta]}, 
+             {waiting_queue_tmp_sup, start_link, [waiting_queue_normal_sup, waiting_queue_normal]}, 
              permanent, 5000, supervisor, [waiting_queue_normal_sup]},
     WaitingQueueXXXSup = 
         {waiting_queue_XXX_sup, 

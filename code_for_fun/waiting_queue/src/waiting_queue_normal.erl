@@ -18,8 +18,6 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--export([push/1]).
-
 -define(SERVER, ?MODULE).
 
 -define(HIBERNATE_TIMEOUT, 10000).
@@ -44,10 +42,6 @@ start_link(MaxNum, TimeInterval) ->
 
 start_link(ProcessName, MaxNum, TimeInterval) ->
     gen_server:start_link({local, ProcessName}, ?MODULE, [MaxNum, TimeInterval], []).
-
-
-push(Msg) ->
-    gen_server:cast(?MODULE, {push, erlang:self(), Msg}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -124,7 +118,8 @@ handle_cast(_Msg, State) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info({active}, #state{max_num = MaxNum, 
+handle_info({active}, #state{max_num = MaxNum,
+                             time_interval = TimeInterval,
                              waiting_queue = WaitingQueue} = State) ->
     case queue:out(WaitingQueue) of
         {{value, {OriginPid, Msg}}, NewWaitingQueue} ->
@@ -132,6 +127,8 @@ handle_info({active}, #state{max_num = MaxNum,
                 true ->
                     %% do something operations
                     queue_handle(OriginPid, Msg),
+
+                    erlang:send_after(TimeInterval, erlang:self(), {active}),
                     
                     {noreply, State#state{max_num = MaxNum,
                                           waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT};

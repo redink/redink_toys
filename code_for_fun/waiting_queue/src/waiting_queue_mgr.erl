@@ -17,6 +17,9 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
+-export([created_queue/3]).
+-export([created_queue/4]).
+
 -define(SERVER, ?MODULE).
 
 -define(HIBERNATE_TIMEOUT, 10000).
@@ -37,6 +40,12 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
+created_queue(QueuePid, MaxNum, TimeInterval) ->
+    gen_server:call(?MODULE, {created_queue, undefined, QueuePid, MaxNum, TimeInterval}).
+
+created_queue(QueuePid, ProcessName, MaxNum, TimeInterval) ->
+    gen_server:call(?MODULE, {created_queue, ProcessName, QueuePid, MaxNum, TimeInterval}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -53,6 +62,7 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+    ets:new(queue_info, [named_table]),
     {ok, #state{}, ?HIBERNATE_TIMEOUT}.
 
 %%--------------------------------------------------------------------
@@ -69,6 +79,11 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({created_queue, ProcessName, QueuePid, MaxNum, TimeInterval}, _From, State) ->
+    ets:insert(queue_info, {ProcessName, QueuePid, MaxNum, TimeInterval}),
+    {reply, ok, State, ?HIBERNATE_TIMEOUT};
+
+
 handle_call(_Request, _From, State) ->
     {reply, ok, State, ?HIBERNATE_TIMEOUT}.
 
