@@ -36,8 +36,6 @@ init([]) ->
 	%% 		    permanent, 5000, worker, [mysql_agent_pool]},
     {ok, { {one_for_one, 5, 10}, 
            [%%MySQL_agent_pool_Wok, 
-            ?CHILD(emysql_wrapper_cache_mgr, worker),
-            ?CHILD(emysql_wrapper_pool_mgr, worker),
             {emysql_wrapper_pool_sup, 
              {emysql_wrapper_pool_tmp_sup, start_link, [emysql_wrapper_pool_sup, emysql_wrapper_pool]}, 
              permanent, 5000, supervisor, [emysql_wrapper_pool_tmp_sup]}
