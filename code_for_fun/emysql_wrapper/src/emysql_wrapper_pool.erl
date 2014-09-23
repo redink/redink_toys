@@ -10,8 +10,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/9]). 
--export([get_status/0]).
+-export([start_link/9]).
 
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -29,9 +28,6 @@ start_link(PoolName, PoolCount, PoolNum, DBIP, DBPort,
                            DBUser, DBPassword, DBDatabase, DBChst],
                           []).
 
-get_status() ->
-    gen_server:call(?SERVER, get_status).
-
 init([PoolName, PoolCount, PoolNum, DBIP, DBPort,
       DBUser, DBPassword, DBDatabase, DBChst]) ->
     erlang:process_flag(trap_exit, true),
@@ -45,12 +41,16 @@ init([PoolName, PoolCount, PoolNum, DBIP, DBPort,
             {stop, error}
     end.
 
+handle_call({querysql, SQL, TimeOut}, _, 
+             #state{poolname = PoolName,
+                    poolcount = PoolCount} = State) ->
+    {reply, 
+     mysql_util:fetch_all(get_pool(PoolName, PoolCount), SQL, TimeOut),
+     State};
+
 handle_call(stop, _, State) ->
     delete_pool(State#state.poolname, State#state.poolcount),
     {stop, normal, State};
-
-handle_call(get_status, _, State) ->
-    {reply, State, State};
 
 handle_call(_, _, State) ->
     {reply, ok, State}.
@@ -98,3 +98,5 @@ delete_pool(PoolName, PoolCount) ->
        )
      ).
 
+get_pool(PoolName, PoolCount) ->
+    erlang:list_to_atom(PoolName ++ "_" ++ erlang:integer_to_list(PoolCount)).
