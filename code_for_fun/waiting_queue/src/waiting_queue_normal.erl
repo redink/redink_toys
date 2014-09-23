@@ -6,12 +6,13 @@
 %%% @end
 %%% Created : 15 Jul 2014 by redink <cnredink@gmail.com>
 %%%-------------------------------------------------------------------
--module(waiting_queue).
+-module(waiting_queue_normal).
 
 -behaviour(gen_server).
 
 %% API
 -export([start_link/2]).
+-export([start_link/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -39,7 +40,10 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link(MaxNum, TimeInterval) ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [MaxNum, TimeInterval], []).
+    gen_server:start_link(?MODULE, [MaxNum, TimeInterval], []).
+
+start_link(ProcessName, MaxNum, TimeInterval) ->
+    gen_server:start_link({local, ProcessName}, ?MODULE, [MaxNum, TimeInterval], []).
 
 
 push(Msg) ->
@@ -92,14 +96,15 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 handle_cast({push, OriginPid, Msg}, #state{max_num = 0, 
                                            waiting_queue = WaitingQueue} = State) ->
+    erlang:monitor(process, OriginPid),
     NewState = State#state{waiting_queue = queue:in({OriginPid, Msg}, WaitingQueue)},
     {noreply, NewState, ?HIBERNATE_TIMEOUT};
 
-handle_cast({push, _OriginPid, Msg}, #state{max_num = MaxNum, 
+handle_cast({push, OriginPid, Msg}, #state{max_num = MaxNum, 
                                             time_interval = TimeInterval} = State) ->
     
     %% do something operation
-    io:format("----------------- ~p~n", [Msg]),
+    queue_handle(OriginPid, Msg),
 
     %% send after 60s, tell the queue seed will active
     erlang:send_after(TimeInterval, erlang:self(), {active}),
@@ -123,14 +128,30 @@ handle_info({active}, #state{max_num = MaxNum,
                              waiting_queue = WaitingQueue} = State) ->
     case queue:out(WaitingQueue) of
         {{value, {OriginPid, Msg}}, NewWaitingQueue} ->
-            %% do something operations
-            io:format("------------origin pid  ~p, msg ~p ~n", [OriginPid, Msg]),
-            {noreply, State#state{max_num = MaxNum,
-                                  waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT};
+            case erlang:is_process_alive(OriginPid) of
+                true ->
+                    %% do something operations
+                    queue_handle(OriginPid, Msg),
+                    
+                    {noreply, State#state{max_num = MaxNum,
+                                          waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT};
+                _ ->
+                    {noreply, State#state{max_num = MaxNum + 1,
+                                          waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT}
+            end;
         {empty, NewWaitingQueue} ->
             {noreply, State#state{max_num = MaxNum + 1,
                                   waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT}
     end;
+
+handle_info({'DOWN', MonitorRef, process, OriginPid, _Reason}, 
+            #state{waiting_queue = WaitingQueue} = State) ->
+    erlang:demonitor(MonitorRef, [flush]),
+    NewWaitingQueue = queue:filter(fun(X) -> 
+                                        erlang:element(1, X) =/= OriginPid 
+                                   end, 
+                                  WaitingQueue),
+    {noreply, State#state{waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT};
 
 handle_info(timeout, State) ->
     proc_lib:hibernate(gen_server, enter_loop,
@@ -168,4 +189,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+queue_handle(OriginPid, Msg) ->
+    io:format("------------origin pid  ~p, msg ~p ~n", [OriginPid, Msg]).
 
