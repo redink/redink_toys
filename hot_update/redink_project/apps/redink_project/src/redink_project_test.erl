@@ -4,9 +4,9 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 15 Jul 2014 by redink <cnredink@gmail.com>
+%%% Created by redink <cnredink@gmail.com>
 %%%-------------------------------------------------------------------
--module(hibernate_test).
+-module(redink_project_test).
 
 -behaviour(gen_server).
 
@@ -69,6 +69,10 @@ init([]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({test}, _, State) ->
+    Reply = update1,
+    {reply, Reply, State, ?HIBERNATE_TIMEOUT};
+
 handle_call(_Request, _From, State) ->
     {reply, ok, State, ?HIBERNATE_TIMEOUT}.
 

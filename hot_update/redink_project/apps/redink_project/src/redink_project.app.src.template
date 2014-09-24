@@ -1,0 +1,12 @@
+{application, redink_project,
+ [
+  {description, ""},
+  {vsn, "###VERSION_TEMPLATE###"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { redink_project_app, []}},
+  {env, []}
+ ]}.

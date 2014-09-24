@@ -65,8 +65,8 @@
 ## pool state 
 
 	11> emysql_conn_mgr:pools().
-	[{pool,your_other_pool_1,1,"ptmind","ptmind2012",
-       "127.0.0.1",3306,"ptmind_default",utf8,
+	[{pool,your_other_pool_1,1,"xxx","xxx",
+       "127.0.0.1",3306,"xxx",utf8,
        {[{emysql_connection,"#Port<0.3744>",your_other_pool_1,utf8,
                             #Port<0.3744>,<<"5.5.36-log">>,1360392,63487,33,
                             {0,nil},
@@ -76,8 +76,8 @@
        {[],[]},
        [],0,infinity,false},
  	
-	{pool,your_pool_1,1,"ptmind","ptmind2012","127.0.0.1",3306,
-       "ptmind_default",utf8,
+	{pool,your_pool_1,1,"xxx","xxx","127.0.0.1",3306,
+       "xxx",utf8,
        {[{emysql_connection,"#Port<0.3664>",your_pool_1,utf8,
                             #Port<0.3664>,<<"5.5.36-log">>,1360343,63487,33,
                             {0,nil},
