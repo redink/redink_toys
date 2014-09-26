@@ -45,7 +45,7 @@ handle_call({querysql, SQL, TimeOut}, _,
              #state{poolname = PoolName,
                     poolcount = PoolCount} = State) ->
     {reply, 
-     mysql_util:fetch_all(get_pool(PoolName, PoolCount), SQL, TimeOut),
+     emysql_wrapper_util:fetch_all(get_pool(PoolName, PoolCount), SQL, TimeOut),
      State};
 
 handle_call(stop, _, State) ->
@@ -77,9 +77,9 @@ init_pools(PoolName, PoolCount, PoolNum, DBIP, DBPort,
            DBUser, DBPassword, DBDatabase, DBChst) ->
     Pool = erlang:list_to_atom(lists:append([PoolName, "_", erlang:integer_to_list(PoolCount)])),
 
-    mysql_util:unlinkmysql(Pool),
+    emysql_wrapper_util:unlinkmysql(Pool),
 
-    case mysql_util:linkmysql(Pool, PoolNum, DBIP, DBPort, 
+    case emysql_wrapper_util:linkmysql(Pool, PoolNum, DBIP, DBPort, 
                               DBUser, DBPassword,
                               DBDatabase, DBChst) of
         ok ->
@@ -92,7 +92,7 @@ init_pools(PoolName, PoolCount, PoolNum, DBIP, DBPort,
 delete_pool(_, 0) ->
     ok;
 delete_pool(PoolName, PoolCount) ->
-    mysql_util:unlinkmysql(
+    emysql_wrapper_util:unlinkmysql(
       erlang:list_to_atom(
         lists:append([PoolName, "_", erlang:integer_to_list(PoolCount)])
        )

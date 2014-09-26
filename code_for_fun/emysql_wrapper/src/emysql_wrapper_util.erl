@@ -1,4 +1,4 @@
--module(mysql_util).
+-module(emysql_wrapper_util).
 
 %%--------------------------------------------------------------------
 %% External exports (should only be used by the 'mysql_conn' module)

@@ -31,11 +31,8 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    %% MySQL_agent_pool_MFA = {mysql_agent_pool, start_link, []},
-    %% MySQL_agent_pool_Wok = {mysql_agent_pool, MySQL_agent_pool_MFA, 
-	%% 		    permanent, 5000, worker, [mysql_agent_pool]},
     {ok, { {one_for_one, 5, 10}, 
-           [%%MySQL_agent_pool_Wok, 
+           [ 
             {emysql_wrapper_pool_sup, 
              {emysql_wrapper_pool_tmp_sup, start_link, [emysql_wrapper_pool_sup, emysql_wrapper_pool]}, 
              permanent, 5000, supervisor, [emysql_wrapper_pool_tmp_sup]}
