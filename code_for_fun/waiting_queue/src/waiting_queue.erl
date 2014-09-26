@@ -14,7 +14,13 @@
          create_normal_queue/3,
          create_normal_queue/2]).
 
--export([route_queue/2]).
+-export([route_queue/3,
+         route_queue/5]).
+
+-export([get_queue_type/1]).
+
+-export([get_queue_waiting/1,
+         get_queue_waiting_size/1]).
 
 
 create_queue(normal, MaxNum, TimeInterval) ->
@@ -32,7 +38,7 @@ create_queue(_Type, _PorcessName, _MaxNum, _TimeInterval) ->
 
 create_normal_queue(MaxNum, TimeInterval) ->
     case Result = supervisor:start_child(waiting_queue_normal_sup, 
-                                         [MaxNum, TimeInterval]) of
+                                         [normal, MaxNum, TimeInterval]) of
         {ok, Pid} ->
             waiting_queue_mgr:created_queue(Pid, MaxNum, TimeInterval);
         _ ->
@@ -42,7 +48,7 @@ create_normal_queue(MaxNum, TimeInterval) ->
 
 create_normal_queue(ProcessName, MaxNum, TimeInterval) ->
     case Result = supervisor:start_child(waiting_queue_normal_sup, 
-                                         [ProcessName, MaxNum, TimeInterval]) of
+                                         [ProcessName, normal, MaxNum, TimeInterval]) of
         {ok, Pid} ->
             waiting_queue_mgr:created_queue(Pid, ProcessName, MaxNum, TimeInterval);
         _ ->
@@ -50,6 +56,19 @@ create_normal_queue(ProcessName, MaxNum, TimeInterval) ->
     end,
     Result.
 
-route_queue(Queue, Msg) ->
-    gen_server:cast(Queue, {push, erlang:self(), Msg}).
+route_queue(Queue, MsgID, Msg) ->
+    gen_server:cast(Queue, {push, erlang:self(), MsgID, Msg}).
+
+route_queue(Queue, MsgID, Mod, Fun, Args) ->
+    gen_server:cast(Queue, {push, erlang:self(), MsgID, {Mod, Fun, Args}}).
+
+get_queue_type(Queue) ->
+    gen_server:call(Queue, {get_type}).
+
+get_queue_waiting(Queue) ->
+    gen_server:call(Queue, {get_waiting}).
+
+get_queue_waiting_size(Queue) ->
+    gen_server:call(Queue, {get_waiting_size}).
+
     

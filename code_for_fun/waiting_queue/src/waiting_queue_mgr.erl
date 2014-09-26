@@ -141,7 +141,7 @@ terminate(_Reason, _State) ->
 %% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
-    {ok, State, ?HIBERNATE_TIMEOUT}.
+    {ok, State}.
 
 %%%===================================================================
 %%% Internal functions

@@ -11,8 +11,8 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/2]).
 -export([start_link/3]).
+-export([start_link/4]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -22,7 +22,9 @@
 
 -define(HIBERNATE_TIMEOUT, 10000).
 
--record(state, {max_num = 10,
+-record(state, {
+                queue_type,
+                max_num = 10,
                 waiting_queue = queue:new(),
                 time_interval = 60000}).
 
@@ -37,11 +39,11 @@
 %% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
 %% @end
 %%--------------------------------------------------------------------
-start_link(MaxNum, TimeInterval) ->
-    gen_server:start_link(?MODULE, [MaxNum, TimeInterval], []).
+start_link(QueueType, MaxNum, TimeInterval) ->
+    gen_server:start_link(?MODULE, [QueueType, MaxNum, TimeInterval], []).
 
-start_link(ProcessName, MaxNum, TimeInterval) ->
-    gen_server:start_link({local, ProcessName}, ?MODULE, [MaxNum, TimeInterval], []).
+start_link(ProcessName, QueueType, MaxNum, TimeInterval) ->
+    gen_server:start_link({local, ProcessName}, ?MODULE, [QueueType, MaxNum, TimeInterval], []).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -58,8 +60,10 @@ start_link(ProcessName, MaxNum, TimeInterval) ->
 %%                     {stop, Reason}
 %% @end
 %%--------------------------------------------------------------------
-init([MaxNum, TimeInterval]) ->
-    {ok, #state{max_num = MaxNum, time_interval = TimeInterval}, ?HIBERNATE_TIMEOUT}.
+init([QueueType, MaxNum, TimeInterval]) ->
+    {ok, #state{max_num = MaxNum, 
+                time_interval = TimeInterval,
+                queue_type = QueueType}, ?HIBERNATE_TIMEOUT}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -75,6 +79,15 @@ init([MaxNum, TimeInterval]) ->
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_call({get_waiting}, _From, #state{waiting_queue = WaitingQueue} = State) ->
+    {reply, queue:to_list(WaitingQueue), State, ?HIBERNATE_TIMEOUT};
+
+handle_call({get_type}, _From, #state{queue_type = QueueType} = State) ->
+    {reply, QueueType, State, ?HIBERNATE_TIMEOUT};
+
+handle_call({get_waiting_size}, _From, #state{waiting_queue = WaitingQueue} = State) ->
+    {reply, queue:len(WaitingQueue), State, ?HIBERNATE_TIMEOUT};
+
 handle_call(_Request, _From, State) ->
     {reply, ok, State, ?HIBERNATE_TIMEOUT}.
 
@@ -88,14 +101,14 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_cast({push, OriginPid, Msg}, #state{max_num = 0, 
-                                           waiting_queue = WaitingQueue} = State) ->
+handle_cast({push, OriginPid, MsgID, Msg}, 
+             #state{max_num = 0, waiting_queue = WaitingQueue} = State) ->
     erlang:monitor(process, OriginPid),
-    NewState = State#state{waiting_queue = queue:in({OriginPid, Msg}, WaitingQueue)},
+    NewState = State#state{waiting_queue = queue:in({OriginPid, MsgID, Msg}, WaitingQueue)},
     {noreply, NewState, ?HIBERNATE_TIMEOUT};
 
-handle_cast({push, OriginPid, Msg}, #state{max_num = MaxNum, 
-                                            time_interval = TimeInterval} = State) ->
+handle_cast({push, OriginPid, _MsgID, Msg}, 
+             #state{max_num = MaxNum, time_interval = TimeInterval} = State) ->
     
     %% do something operation
     queue_handle(OriginPid, Msg),
@@ -122,7 +135,7 @@ handle_info({active}, #state{max_num = MaxNum,
                              time_interval = TimeInterval,
                              waiting_queue = WaitingQueue} = State) ->
     case queue:out(WaitingQueue) of
-        {{value, {OriginPid, Msg}}, NewWaitingQueue} ->
+        {{value, {OriginPid, _MsgID, Msg}}, NewWaitingQueue} ->
             case erlang:is_process_alive(OriginPid) of
                 true ->
                     %% do something operations
@@ -181,14 +194,16 @@ terminate(_Reason, _State) ->
 %% @end
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
-    {ok, State, ?HIBERNATE_TIMEOUT}.
+    {ok, State}.
 
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
 
-queue_handle(OriginPid, {Fun, Args}) when erlang:is_function(Fun) ->
-    erlang:apply(Fun, Args);
+queue_handle(_OriginPid, {Mod, Fun, Args}) when erlang:is_atom(Mod),
+                                                erlang:is_atom(Fun),
+                                                erlang:is_list(Args) ->
+    erlang:apply(Mod, Fun, Args);
 
 queue_handle(OriginPid, Msg) ->
     io:format("------------origin pid  ~p, msg ~p ~n", [OriginPid, Msg]).
