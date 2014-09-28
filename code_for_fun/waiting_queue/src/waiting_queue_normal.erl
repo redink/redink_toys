@@ -101,6 +101,15 @@ handle_call(_Request, _From, State) ->
 %%                                  {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+
+handle_cast({pull, MsgID}, 
+            #state{waiting_queue = WaitingQueue} = State) ->
+    NewWaitingQueue = queue:filter(fun(X) -> 
+                                        erlang:element(2, X) =/= MsgID 
+                                   end, 
+                                  WaitingQueue),
+    {noreply, State#state{waiting_queue = NewWaitingQueue}, ?HIBERNATE_TIMEOUT};
+
 handle_cast({push, OriginPid, MsgID, Msg}, 
              #state{max_num = 0, waiting_queue = WaitingQueue} = State) ->
     erlang:monitor(process, OriginPid),

@@ -22,6 +22,8 @@
 -export([get_queue_waiting/1,
          get_queue_waiting_size/1]).
 
+-export([cancel_route/2]).
+
 
 create_queue(normal, MaxNum, TimeInterval) ->
     create_normal_queue(MaxNum, TimeInterval);
@@ -70,5 +72,8 @@ get_queue_waiting(Queue) ->
 
 get_queue_waiting_size(Queue) ->
     gen_server:call(Queue, {get_waiting_size}).
+
+cancel_route(Queue, MsgID) ->
+    gen_server:cast(Queue, {pull, MsgID}).
 
     
