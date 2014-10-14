@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block content %}
+  <h2>ResultData</h2>
+
+  <div class="body-content">
+    <div class="row">
+      {% if query_sid %}<p class=normal><strong>Sid:</strong> {{ query_sid }}{% endif %}
+      {% if query_date %}<p class=normal><strong>Date:</strong> {{ query_date }}{% endif %}
+    </div>
+  </div>
+{% endblock %}

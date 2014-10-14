@@ -1,0 +1,21 @@
+
+{% extends "layout.html" %}
+{% block content %}
+<div class="container-narrow">
+  <h1>GetAllData</h1>
+    <br/>
+    <form id="getalldataForm" class="form form-getalldata" method="POST" action="" role="form">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{form.sid.label}}
+                {{form.sid(placeholder="Sid", class_="form-control")}}
+            </div>
+            <div class="form-group">
+                {{form.date.label}}
+                {{form.date(placeholder="Date", class_="form-control")}}
+            </div>
+            <button type="submit" class="btn btn-default">Get Data</button>
+            
+    </form>
+</div>
+{% endblock %}
