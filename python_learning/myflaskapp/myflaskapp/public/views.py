@@ -12,6 +12,10 @@ from myflaskapp.user.forms import RegisterForm
 from myflaskapp.utils import flash_errors
 from myflaskapp.database import db
 
+from flask import current_app
+from flask_mail import Mail
+from flask_mail import Message
+
 blueprint = Blueprint('public', __name__, static_folder="../static")
 
 @login_manager.user_loader
@@ -76,3 +80,19 @@ def alldata():
 def data(query_sid, query_date):
     return render_template('data/returndata.html', query_sid = query_sid, query_date = query_date)
 
+
+@blueprint.route('/mail/')
+@login_required
+def mail():
+    print current_app.config
+
+    msg = Message("hello", sender = "from@example.com", recipients = ['to@example.com'])
+    msg.body = "testing"
+    msg.html = "<b>testing</b>"
+
+    mail = Mail()
+    mail.init_app(current_app)
+
+    mail.send(msg)
+
+    return "ok"

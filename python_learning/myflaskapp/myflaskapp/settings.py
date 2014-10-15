@@ -20,6 +20,12 @@ class ProdConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/example'  # TODO: Change me
     DEBUG_TB_ENABLED = False  # Disable Debug toolbar
+    MAIL_SERVER = "smtp.xx.com"
+    MAIL_PORT = 587
+    MAIL_USE_SSL = False
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = 'XXXXXX'
+    MAIL_PASSWORD = 'XXXXXX'
 
 
 class DevConfig(Config):
@@ -33,6 +39,12 @@ class DevConfig(Config):
     DEBUG_TB_ENABLED = True
     ASSETS_DEBUG = True  # Don't bundle/minify static assets
     CACHE_TYPE = 'simple'  # Can be "memcached", "redis", etc.
+    MAIL_SERVER = "smtp.xx.com"
+    MAIL_PORT = 587
+    MAIL_USE_SSL = False
+    MAIL_USE_TLS = True
+    MAIL_USERNAME = 'XXXXXX'
+    MAIL_PASSWORD = 'XXXXXX'
 
 
 class TestConfig(Config):
