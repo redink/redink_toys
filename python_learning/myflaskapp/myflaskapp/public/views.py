@@ -12,9 +12,12 @@ from myflaskapp.user.forms import RegisterForm
 from myflaskapp.utils import flash_errors
 from myflaskapp.database import db
 
-from flask import current_app
+from flask import current_app, jsonify
 from flask_mail import Mail
 from flask_mail import Message
+
+import base64
+import json
 
 blueprint = Blueprint('public', __name__, static_folder="../static")
 
@@ -96,3 +99,25 @@ def mail():
     mail.send(msg)
 
     return "ok"
+
+@blueprint.route('/test_json_jsonify')
+@login_required
+def test_json_jsonify():
+
+    return jsonify(username = "redink", email = "cnredink@gmail.com", id = 123)
+
+@blueprint.route('/test_json_normal')
+@login_required
+def test_json_normal():
+    
+    jsondata = "{\"username\":\"redink\",\"email\":\"cnredink@gmail.com\"}"
+
+    # convert to json 
+    print "convert to json result %s" % json.loads(jsondata)
+
+    # convert to string
+    print "convert to string result %s" % json.dumps(json.loads(jsondata))
+
+    return "ok"
+
+
