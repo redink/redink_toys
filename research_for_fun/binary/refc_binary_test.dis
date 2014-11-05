@@ -1,0 +1,67 @@
+000000001C8047B8: i_func_info_IaaI 0 refc_binary_test start 0 
+000000001C8047E0: allocate_heap_zero_tIt 1 2 0 
+000000001C8047F8: self_r x(0) 
+000000001C804800: put_list_rnx x(0) [] x(2) 
+000000001C804810: move_x1_c handle_big_binary 
+000000001C804820: move_cr refc_binary_test x(0) 
+000000001C804830: call_bif_e erlang:spawn/3 
+000000001C804840: i_loop_rec_fr f(000000001C804970) x(0) 
+000000001C804850: is_tuple_of_arity_frA f(000000001C804950) x(0) 2 
+000000001C804868: extract_next_element2_x x(1) 
+000000001C804878: i_is_eq_exact_immed_fxc f(000000001C804950) x(1) ok 
+000000001C804898: remove_message 
+000000001C8048A0: test_heap_It 3 3 
+000000001C8048B0: move_xy x(2) y(0) 
+000000001C8048C0: i_put_tuple_rI x(0) 2  binary_info x(2)
+000000001C8048E0: call_bif_e erts_debug:get_internal_state/1 
+000000001C8048F0: test_heap_It 2 1 
+000000001C804900: put_list_rnx x(0) [] x(1) 
+000000001C804910: i_move_call_ext_cre "------- handled ~p~n" x(0) io:format/2 
+000000001C804928: i_move_call_ext_cre 1000000 x(0) timer:sleep/1 
+000000001C804940: move_deallocate_return_yrQ y(0) x(0) 1 
+000000001C804950: remove_message 
+000000001C804958: move_deallocate_return_crQ error x(0) 1 
+000000001C804970: i_wait_timeout_locked_fI f(000000001C804840) 10000 
+000000001C804988: timeout 
+000000001C804990: move_deallocate_return_crQ error x(0) 1 
+
+000000001C8049A8: i_func_info_IaaI 0 refc_binary_test handle_big_binary 1 
+000000001C8049D0: allocate_zero_tt 2 1 
+000000001C8049E0: move_ry x(0) y(1) 
+000000001C8049F0: move_x1_c 1048576 
+000000001C804A00: move_cr <<1 byte>> x(0) 
+000000001C804A10: call_bif_e binary:copy/2 
+000000001C804A20: test_heap_It 3 1 
+000000001C804A30: move_ry x(0) y(0) 
+000000001C804A40: i_put_tuple_rI x(0) 2  binary_info y(1)
+000000001C804A60: call_bif_e erts_debug:get_internal_state/1 
+000000001C804A70: test_heap_It 2 1 
+000000001C804A80: put_list_rnx x(0) [] x(1) 
+000000001C804A90: i_move_call_ext_cre "------- resource ~p~n" x(0) io:format/2 
+000000001C804AA8: i_bs_start_match2_yfIId y(0) f(000000001C804BA8) 0 0 x(0) 
+000000001C804AD8: i_bs_get_binary_imm2_frIIId f(000000001C804BA8) x(0) 1 8 0 x(1) 
+000000001C804B08: bs_test_unit8_fr f(000000001C804BA8) x(0) 
+000000001C804B18: i_trim_I 1 
+000000001C804B28: move_xr x(1) x(0) 
+000000001C804B38: call_bif_e binary:copy/1 
+000000001C804B48: test_heap_It 3 1 
+000000001C804B58: i_put_tuple_xI x(1) 2  ok x(0)
+000000001C804B78: move_yr y(0) x(0) 
+000000001C804B88: call_bif_e erlang:send/2 
+000000001C804B98: deallocate_return_Q 1 
+000000001C804BA8: bs_context_to_binary_y y(0) 
+000000001C804BB8: badmatch_y y(0) 
+
+000000001C804BC8: i_func_info_IaaI 0 refc_binary_test module_info 0 
+000000001C804BF0: move_cr refc_binary_test x(0) 
+000000001C804C00: allocate_tt 0 1 
+000000001C804C10: call_bif_e erlang:get_module_info/1 
+000000001C804C20: deallocate_return_Q 0 
+
+000000001C804C30: i_func_info_IaaI 0 refc_binary_test module_info 1 
+000000001C804C58: move_rx x(0) x(1) 
+000000001C804C68: move_cr refc_binary_test x(0) 
+000000001C804C78: allocate_tt 0 2 
+000000001C804C88: call_bif_e erlang:get_module_info/2 
+000000001C804C98: deallocate_return_Q 0 
+
