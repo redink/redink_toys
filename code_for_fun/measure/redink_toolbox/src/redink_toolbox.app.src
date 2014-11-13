@@ -1,0 +1,12 @@
+{application, redink_toolbox,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { redink_toolbox_app, []}},
+  {env, []}
+ ]}.
