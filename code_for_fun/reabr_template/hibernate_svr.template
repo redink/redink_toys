@@ -1,0 +1,2 @@
+{variables, [{hibernate_svr_id, "myhibernatesvr"}]}.
+{template, "hibernate_svr.erl", "src/{{hibernate_svr_id}}.erl"}.
