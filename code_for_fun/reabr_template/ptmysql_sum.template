@@ -1,0 +1,2 @@
+{variables, [{ptmysql_sum_id, "ptmysql_sum"}]}.
+{template, "ptmysql_sum.erl", "{{ptmysql_sum_id}}.erl"}.
