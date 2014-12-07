@@ -1,0 +1,2 @@
+{variables, [{new_ptnature_mysql_mgr_last_id, "new_ptnature_mysql_mgr_last_id"}]}.
+{template, "new_ptnature_mysql_mgr_last.erl", "ptnature_mysql_mgr_last_{{new_ptnature_mysql_mgr_last_id}}.erl"}.
