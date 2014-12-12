@@ -1,0 +1,2 @@
+{variables, [{slowlog_id, "slowlogid"}]}.
+{template, "slow_log.erl", "{{slowlog_id}}.erl"}.
