@@ -1,0 +1,2 @@
+{variables, [{ets_cache_id, "simple ets cache which support size && memory limit using FIFO queue"}]}.
+{template, "ets_cache.erl", "{{ets_cache_id}}.erl"}.
