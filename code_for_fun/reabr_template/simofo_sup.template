@@ -1,0 +1,2 @@
+{variables, [{simofo_sup_id, "simple_one_for_one's supervisor template"}]}.
+{template, "simofo_sup.erl", "{{simofo_sup_id}}_tmp_sup.erl"}.
