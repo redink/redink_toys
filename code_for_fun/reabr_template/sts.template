@@ -1,0 +1,2 @@
+{variables, [{sts_id, "simple time server template"}]}.
+{template, "sts.erl", "{{sts_id}}.erl"}.
