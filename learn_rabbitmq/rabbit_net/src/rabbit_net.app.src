@@ -1,0 +1,12 @@
+{application, rabbit_net,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { rabbit_net_app, []}},
+  {env, [{tcp_listeners, [19000]}]}
+ ]}.
