@@ -1,0 +1,14 @@
+{application, lproto,
+ [
+  {description, "An Erlang lproto library"},
+  {vsn, "1"},
+  {modules, [
+             lproto
+            ]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.
