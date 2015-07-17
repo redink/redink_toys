@@ -1,0 +1,14 @@
+{application, wordcount,
+ [
+  {description, "An Erlang wordcount library"},
+  {vsn, "1"},
+  {modules, [
+             wordcount
+            ]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.
