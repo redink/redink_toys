@@ -106,6 +106,7 @@ handle_call({trap_exit, test_spawn_genserver_process_exit}, _From, State) ->
     {reply, ok, State, ?HIBERNATE_TIMEOUT};
 
 %% sub process will exit too
+%% sub process will not execute terminate/2
 handle_call(test_spawn_genserver_process_and_parent_exit, _From, State) ->
     R = ?MODULE:start_link(nothing),
     io:format(" sub process is : ~p~n", [R]),
@@ -113,10 +114,26 @@ handle_call(test_spawn_genserver_process_and_parent_exit, _From, State) ->
     {reply, ok, State, ?HIBERNATE_TIMEOUT};
 
 %% sub process will exit too
+%% sub process will execute terminate/2
 handle_call({trap_exit, test_spawn_genserver_process_and_parent_exit}, _From, State) ->
     R = ?MODULE:start_link({nothing, trap_exit}),
     io:format(" sub process is : ~p~n", [R]),
     1 = 2,
+    {reply, ok, State, ?HIBERNATE_TIMEOUT};
+
+% 如果想要使用exit，要注意这里最后的两行，Reason的两个特殊值：normal和kill。
+% 使用exit(Pid,normal)的时候，如果pid 是trap_exit的，那么normal会变成一个{'EXIT',From,normal}的消息发送到pid的messges中。
+% 使用exit(Pid, kill) 的时候，pid会直接退出。
+% 对于gen_server，要注意这些时候都是不会走进terminate的，其他Reason可以正常走进terminate执行清理工作。
+
+handle_call({normal, test_spawn_genserver_process_and_parent_exit}, _From, State) ->
+    R = ?MODULE:start_link(nothing),
+    io:format(" sub process is : ~p~n", [R]),
+    {reply, ok, State, ?HIBERNATE_TIMEOUT};
+
+handle_call({normal, {trap_exit, test_spawn_genserver_process_and_parent_exit}}, _From, State) ->
+    R = ?MODULE:start_link({nothing, trap_exit}),
+    io:format(" sub process is : ~p~n", [R]),
     {reply, ok, State, ?HIBERNATE_TIMEOUT};
 
 handle_call(_Request, _From, State) ->
@@ -141,7 +158,8 @@ handle_info(_Info, State) ->
     {noreply, State, ?HIBERNATE_TIMEOUT}.
 
 %%--------------------------------------------------------------------
-terminate(_Reason, _State) ->
+terminate(Reason, _State) ->
+    io:format("-------- ~p, ~p~n", [erlang:self(), Reason]),
     ok.
 
 %%--------------------------------------------------------------------
