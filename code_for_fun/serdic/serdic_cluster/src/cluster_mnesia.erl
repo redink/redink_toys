@@ -22,6 +22,7 @@
             false-> (FalseFun)
         end)).
 
+%% @doc Start mnesia and init mnesia tables.
 -spec start() -> ok.
 start() ->
     ok = ensure_ok(ensure_data_dir()),
@@ -30,6 +31,8 @@ start() ->
     ok = init_tables(),
     ok = wait_for(tables).
 
+%% @doc Join given node into cluster.
+-spec join_cluster(atom()) -> ok.
 join_cluster(Node) ->
     ok = ensure_ok(ensure_stopped()),
     ok = ensure_ok(delete_schema()),
@@ -39,6 +42,8 @@ join_cluster(Node) ->
     ok = copy_tables(),
     ok = ensure_ok(wait_for(tables)).
 
+%% @doc Leave from cluster.
+-spec leave_cluster() -> ok | {error, term()}.
 leave_cluster() ->
     case running_nodes() -- [node()] of
         [] ->
@@ -55,6 +60,8 @@ leave_cluster() ->
             end
     end.
 
+%% @doc Remove given node from cluster.
+-spec remove_from_cluster(atom()) -> ok | {error, term()}.
 remove_from_cluster(Node) when Node =/= node() ->
     case {is_node_in_cluster(Node), is_running_db_node(Node)} of
         {true, true} ->
@@ -68,7 +75,8 @@ remove_from_cluster(Node) when Node =/= node() ->
             {error, node_not_in_cluster}
     end.
 
--spec(cluster_status() -> list()).
+%% @doc Print cluster status information.
+-spec cluster_status() -> list().
 cluster_status() ->
     Running = mnesia:system_info(running_db_nodes),
     Stopped = mnesia:system_info(db_nodes) -- Running,
@@ -76,19 +84,21 @@ cluster_status() ->
             [{running_nodes, Running}, {stopped_nodes, Stopped}]).
 
 %% @doc Create mnesia table.
--spec(create_table(Name:: atom(), TabDef :: list()) -> ok | {error, any()}).
+-spec create_table(atom(), list()) -> ok | {error, any()}.
 create_table(Name, TabDef) ->
     ensure_tab(mnesia:create_table(Name, TabDef)).
 
 %% @doc Copy mnesia table.
--spec(copy_table(Name :: atom()) -> ok).
+-spec copy_table(atom()) -> ok.
 copy_table(Name) ->
     copy_table(Name, ram_copies).
 
+-spec copy_table(atom(), atom()) -> ok.
 copy_table(Name, RamOrDisc) ->
     ensure_tab(mnesia:add_table_copy(Name, node(), RamOrDisc)).
 
 %% @doc Delete schema copy
+-spec del_schema_copy(atom()) -> ok | {error, term()}.
 del_schema_copy(Node) ->
     case mnesia:del_table_copy(schema, Node) of
         {atomic, ok} -> ok;
@@ -96,6 +106,7 @@ del_schema_copy(Node) ->
     end.
 
 %% @private
+-spec ensure_data_dir() -> ok | {error, term()}.
 ensure_data_dir() ->
     MnesiaDir = mnesia:system_info(directory),
     case filelib:ensure_dir(filename:join(MnesiaDir, foo)) of
@@ -106,12 +117,15 @@ ensure_data_dir() ->
     end.
 
 %% @private
+-spec init_mnesia_schema() -> ok | {error, term()}.
 init_mnesia_schema() ->
     case mnesia:system_info(extra_db_nodes) of
         []    -> mnesia:create_schema([node()]);
         [_|_] -> ok
     end.
 
+%% @private
+-spec copy_schema(atom()) -> ok | {error, term()}.
 copy_schema(Node) ->
     case mnesia:change_table_copy_type(schema, Node, disc_copies) of
         {atomic, ok} ->
@@ -122,9 +136,11 @@ copy_schema(Node) ->
             {error, Error}
     end.
 
+-spec delete_schema() -> ok | {error, term()}.
 delete_schema() ->
     mnesia:delete_schema([erlang:node()]).
 
+-spec init_tables() -> ok.
 init_tables() ->
     case mnesia:system_info(extra_db_nodes) of
         [] ->
@@ -133,20 +149,25 @@ init_tables() ->
             copy_tables()
     end.
 
+-spec create_tables() -> ok.
 create_tables() ->
     (get_table_def_module()):mnesia(boot).
 
+-spec copy_tables() -> ok.
 copy_tables() ->
     (get_table_def_module()):mnesia(copy).
 
+-spec ensure_stopped() -> ok | {error, term()}.
 ensure_stopped() ->
     stopped = mnesia:stop(),
     wait_for(stop).
 
+-spec ensure_started() -> ok | {error, term()}.
 ensure_started() ->
     ok = mnesia:start(),
     wait_for(start).
 
+-spec connect(atom()) -> ok | {error, term()}.
 connect(Node) ->
     case mnesia:change_config(extra_db_nodes, [Node]) of
         {ok, [Node]} ->

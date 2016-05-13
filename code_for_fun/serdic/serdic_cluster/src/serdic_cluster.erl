@@ -52,4 +52,3 @@ is_running(Node) ->
 -spec is_clustered(atom()) -> boolean().
 is_clustered(Node) ->
     lists:member(Node, cluster_mnesia:running_nodes()).
-
