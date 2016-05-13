@@ -1,0 +1,12 @@
+{application, serdic_cluster,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { serdic_cluster_app, []}},
+  {env, [{table_def_mod, cluster_table}]}
+ ]}.
