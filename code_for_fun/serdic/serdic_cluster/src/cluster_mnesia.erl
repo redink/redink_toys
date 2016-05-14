@@ -151,11 +151,13 @@ init_tables() ->
 
 -spec create_tables() -> ok.
 create_tables() ->
-    (get_table_def_module()):mnesia(boot).
+    [(X):mnesia(boot) || X <- get_table_def_module()],
+    ok.
 
 -spec copy_tables() -> ok.
 copy_tables() ->
-    (get_table_def_module()):mnesia(copy).
+    [(X):mnesia(copy) || X <- get_table_def_module()],
+    ok.
 
 -spec ensure_stopped() -> ok | {error, term()}.
 ensure_stopped() ->
@@ -243,4 +245,4 @@ ensure_tab({aborted, Error}) ->
     Error.
 
 get_table_def_module() ->
-    application:get_env(serdic_cluster, table_def_mod, cluster_table).
+    application:get_env(serdic_cluster, table_def_mod, [cluster_table]).
