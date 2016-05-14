@@ -1,0 +1,12 @@
+{application, monmgr,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { monmgr_app, []}},
+  {env, []}
+ ]}.
