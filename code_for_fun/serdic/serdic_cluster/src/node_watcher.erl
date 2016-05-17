@@ -32,12 +32,23 @@
 
 %%--------------------------------------------------------------------
 get_master_node() ->
-    [Node] = [X || {_, X, Y, _} <- get_all_record(), Y =:= master],
-    Node.
+    case is_mnesia_started() of
+        true ->
+            [Node] = [X || {_, X, Y, _} <- get_all_record(), Y =:= master],
+            Node;
+        _ ->
+            {error, "mnesia not started"}
+    end.
 
 get_node_type() ->
-    [{_, _, NodeType, _}] = mnesia:dirty_read(node_type, erlang:node()),
-    NodeType.
+    case is_mnesia_started() of
+        true ->
+            [{_, _, NodeType, _}] = mnesia:dirty_read(node_type, erlang:node()),
+            NodeType;
+        _ ->
+            {error, "mnesia not started"}
+    end.
+
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
@@ -61,8 +72,8 @@ handle_cast(_Msg, State) ->
 
 %%--------------------------------------------------------------------
 handle_info(monitor_other_node, State) ->
-    case proplists:lookup(mnesia, application:which_applications()) of
-        none ->
+    case is_mnesia_started() of
+        false ->
             ignore;
         _ ->
             check_master()
@@ -120,20 +131,29 @@ check_master() ->
     end.
 
 process_master() ->
-    [Node1 | _] = RunningNodes = cluster_mnesia:running_nodes(),
+    RunningNodes  = cluster_mnesia:running_nodes(),
     OtherNodeList = RunningNodes -- [erlang:node()],
+    OldestNode    = get_oldest_node(RunningNodes),
     case [mnesia:dirty_read(node_type, X) || X <- OtherNodeList] of
         [] ->
             set_master();
         ResList0 ->
             case [{X, Y, Time} || {_, X, Y, Time} <- ResList0, Y =:= master] of
                 [] ->
-                    set_master(Node1);
+                    set_master(OldestNode);
                 ResList  ->
                     [{Node, _, _} | _] = lists:ukeysort(ResList, 3),
                     set_master(Node)
             end
     end.
+
+% get_oldest_node() ->
+%     get_oldest_node(cluster_mnesia:running_nodes()).
+
+get_oldest_node(RunningNodes) ->
+    List0 = lists:append([mnesia:dirty_read(node_type, X) || X <- RunningNodes]),
+    [{_, Node, _, _}] = lists:usort(List0),
+    Node.
 
 set_master() ->
     set_master(erlang:node()).
@@ -168,4 +188,12 @@ dirty_all_keys(Table) ->
     case catch mnesia:dirty_all_keys(Table) of
         {'EXIT', _} -> [];
         A           -> A
+    end.
+
+is_mnesia_started() ->
+    case proplists:lookup(mnesia, application:which_applications()) of
+        none ->
+            false;
+        _ ->
+            true
     end.

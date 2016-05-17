@@ -8,5 +8,5 @@
                   stdlib
                  ]},
   {mod, { serdic_cluster_app, []}},
-  {env, [{table_def_mod, cluster_table}]}
+  {env, [{table_def_mod, [cluster_table]}]}
  ]}.
