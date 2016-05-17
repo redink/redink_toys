@@ -162,11 +162,10 @@ get_all_record() ->
                   || XX <- get_all_nodes()]).
 
 get_all_nodes() ->
-    lists:usort(dirty_all_keys(node_type) ++ cluster_mnesia:running_nodes()).    
+    lists:usort(dirty_all_keys(node_type) ++ cluster_mnesia:running_nodes()).
 
 dirty_all_keys(Table) ->
     case catch mnesia:dirty_all_keys(Table) of
         {'EXIT', _} -> [];
         A           -> A
     end.
-
