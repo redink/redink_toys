@@ -1,0 +1,125 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>./c2.COVER.html</title>
+</head><body style='background-color: white; color: black'>
+<pre>
+File generated from /Users/redink/github/sort_erlang/suanfa/c2.erl by COVER 2016-05-25 at 20:45:03
+
+****************************************************************************
+
+        |  -module(c2).
+        |  
+        |  -export([exch/3, issorted/1, nth/2]).
+        |  -export([selectsort/1]).
+        |  -export([insertsort/1]).
+        |  -export([bubblesort/1]).
+        |  
+        |  
+        |  -export([smallest/1]).
+        |  
+        |  
+<font color=red>     0..|  bubblesort([] = L) -&gt; L;</font>
+<font color=red>     0..|  bubblesort([_] = L) -&gt; L;</font>
+        |  bubblesort(L) -&gt;
+     1..|      bubblesort(L, []).
+        |  
+        |  bubblesort(L, Res) -&gt;
+     1..|      bubblesort(L, Res, []).
+        |  
+        |  bubblesort([], Res, []) -&gt;
+     1..|      Res;
+        |  bubblesort([X], Res, Help) -&gt;
+     5..|      bubblesort(Help, [X | Res], []);
+        |  bubblesort([X, Y | T], Res, Help) when X &gt; Y -&gt;
+     4..|      bubblesort([X | T], Res, Help ++ [Y]);
+        |  bubblesort([X | T], Res, Help) -&gt;
+     6..|      bubblesort(T, Res, Help ++ [X]).
+        |  
+<font color=red>     0..|  insertsort([] = L) -&gt; L;</font>
+<font color=red>     0..|  insertsort([_] = L) -&gt; L;</font>
+        |  insertsort(L) -&gt;
+<font color=red>     0..|      insertsort(L, []).</font>
+        |  
+        |  insertsort([], Res) -&gt;
+<font color=red>     0..|      Res;</font>
+        |  insertsort([H | T], Res) -&gt;
+<font color=red>     0..|      insertsort(T, insertsort_do(H, Res, [])).</font>
+        |  
+        |  insertsort_do(Insert0, [], Help) -&gt;
+<font color=red>     0..|      Help ++ [Insert0];</font>
+        |  insertsort_do(Insert0, [H | _] = L, Help) when Insert0 &lt; H -&gt;
+<font color=red>     0..|      Help ++ [Insert0] ++ L;</font>
+        |  insertsort_do(Insert0, [H | T], Help) -&gt;
+<font color=red>     0..|      insertsort_do(Insert0, T, Help ++ [H]).</font>
+        |  
+<font color=red>     0..|  selectsort([] = L) -&gt; L;</font>
+<font color=red>     0..|  selectsort([_] = L) -&gt; L;</font>
+<font color=red>     0..|  selectsort(L) -&gt; selectsort(L, []).</font>
+        |  
+        |  selectsort([], Res) -&gt;
+<font color=red>     0..|      Res;</font>
+        |  selectsort(L, Res) -&gt;
+<font color=red>     0..|      [H | T] = exch(L, 1, smallest(L)),</font>
+<font color=red>     0..|      selectsort(T, Res ++ [H]).</font>
+        |  
+        |  smallest([Min | T]) -&gt;
+<font color=red>     0..|      smallest(Min, T, 1).</font>
+        |  smallest(_Min, [], Index) -&gt;
+<font color=red>     0..|      Index;</font>
+        |  smallest(Min, [H | T], Index) when Min &gt; H -&gt;
+<font color=red>     0..|      smallest(H, T, Index + 1);</font>
+        |  smallest(Min, [_H | T], Index) -&gt;
+<font color=red>     0..|      smallest(Min, T, Index).</font>
+        |  
+        |  exch(L, I, J) when I == J -&gt;
+<font color=red>     0..|      L;</font>
+        |  exch(L, I, J) when I &gt; J -&gt;
+<font color=red>     0..|      exch(L, J, I);</font>
+        |  exch(L, I, J) when I &lt; J -&gt;
+<font color=red>     0..|      case erlang:length(L) &gt;= J of</font>
+        |          true -&gt;
+<font color=red>     0..|              exch(L, I, J, 1, [], [], [], 0, 0);</font>
+        |          _ -&gt;
+<font color=red>     0..|              error</font>
+        |      end.
+        |  
+        |  issorted([]) -&gt;
+<font color=red>     0..|      true;</font>
+        |  issorted([_]) -&gt;
+<font color=red>     0..|      true;</font>
+        |  issorted([X1, X2 | T]) when X1 =&lt; X2 -&gt;
+<font color=red>     0..|      issorted([X2 | T]);</font>
+        |  issorted(_) -&gt;
+<font color=red>     0..|      false.</font>
+        |  
+        |  nth(N, L) -&gt;
+<font color=red>     0..|      nth(L, N, 1).</font>
+        |  
+        |  nth([], _, _) -&gt;
+<font color=red>     0..|      erlang:throw(error);</font>
+        |  nth([H | _], N, Index) when N == Index -&gt;
+<font color=red>     0..|      H;</font>
+        |  nth([_ | T], N, Index) -&gt;
+<font color=red>     0..|      nth(T, N, Index + 1).</font>
+        |  
+        |  exch([], _, _, _, Res1, Res2, Res3, II, JJ) -&gt;
+<font color=red>     0..|      lists:reverse(Res3 ++ [II] ++ Res2 ++ [JJ] ++ Res1);</font>
+        |  exch([H | T], I, J, Index, Res1, Res2, Res3, II, JJ) -&gt;
+<font color=red>     0..|      if</font>
+        |          I &gt; Index -&gt;
+<font color=red>     0..|              exch(T, I, J, Index + 1, [H | Res1], Res2, Res3, II, JJ);</font>
+        |          I == Index -&gt;
+<font color=red>     0..|              exch(T, I, J, Index + 1, Res1, Res2, Res3, H, JJ);</font>
+        |          I &lt; Index andalso J &gt; Index -&gt;
+<font color=red>     0..|              exch(T, I, J, Index + 1, Res1, [H | Res2], Res3, II, JJ);</font>
+        |          J == Index -&gt;
+<font color=red>     0..|              exch(T, I, J, Index + 1, Res1, Res2, Res3, II, H);</font>
+        |          J &lt; Index -&gt;
+<font color=red>     0..|              exch(T, I, J, Index + 1, Res1, Res2, [H | Res3], II, JJ)</font>
+        |      end.
+        |  
+</pre>
+</body>
+</html>
