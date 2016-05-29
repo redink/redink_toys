@@ -4,6 +4,25 @@
 -export([from_last_mid/2]).
 -export([from_prev_mid/2]).
 -export([bfs/1]).
+-export([count/1, hight/1]).
+
+count({node, _Value, undefined, undefined}) ->
+    1;
+count({node, _Value, Left, undefined}) ->
+    1 + count(Left);
+count({node, _Value, undefined, Right}) ->
+    1 + count(Right);
+count({node, _Value, Left, Right}) ->
+    1 + count(Left) + count(Right).
+
+hight({node, _Value, undefined, undefined}) ->
+    1;
+hight({node, _Value, Left, undefined}) ->
+    hight(Left) + 1;
+hight({node, _Value, undefined, Right}) ->
+    hight(Right) + 1;
+hight({node, _, Left, Value}) ->
+    erlang:max(hight(Left), hight(Value)) + 1.
 
 prev({node, Value, undefined, undefined}) ->
     [Value];

@@ -2,13 +2,12 @@
     {node, 2,
      {node, 4, {node, 8, undefined, undefined},
                {node, 9, undefined, undefined}},
-     {node, 5, {node, 10, undefined, undefined},
-               {node, 11, undefined, undefined}}
+     {node, 5, undefined, undefined}
     },
     {node, 3,
      {node, 6, {node, 12, undefined, undefined},
                {node, 13, undefined, undefined}},
      {node, 7, {node, 14, undefined, undefined},
-               {node, 15, undefined, undefined}}
+               {node, 15, {node, 16, undefined, undefined}, undefined}}
     }
 }
