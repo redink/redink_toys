@@ -1,0 +1,26 @@
+0000000012A742B0: i_func_info_IaaI 0 test start 1 
+0000000012A742D8: i_jump_on_val_rfII x(0) f(0000000012A74320) 4 1 f(0000000012A74318) f(0000000012A74318) f(0000000012A74318) f(0000000012A74318) 
+0000000012A74318: return 
+0000000012A74320: move_return_cr 0 x(0) 
+
+0000000012A74330: i_func_info_IaaI 0 test f 1 
+0000000012A74358: i_call_only_f test:end1/1 
+
+0000000012A74368: i_func_info_IaaI 0 test end1 1 
+0000000012A74390: i_jump_on_val_rfII x(0) f(0000000012A743D8) 4 1 f(0000000012A743D0) f(0000000012A743D0) f(0000000012A743D0) f(0000000012A743D0) 
+0000000012A743D0: return 
+0000000012A743D8: move_return_cr 0 x(0) 
+
+0000000012A743E8: i_func_info_IaaI 0 test module_info 0 
+0000000012A74410: move_cr test x(0) 
+0000000012A74420: allocate_tt 0 1 
+0000000012A74430: call_bif_e erlang:get_module_info/1 
+0000000012A74440: deallocate_return_Q 0 
+
+0000000012A74450: i_func_info_IaaI 0 test module_info 1 
+0000000012A74478: move_rx x(0) x(1) 
+0000000012A74488: move_cr test x(0) 
+0000000012A74498: allocate_tt 0 2 
+0000000012A744A8: call_bif_e erlang:get_module_info/2 
+0000000012A744B8: deallocate_return_Q 0 
+
