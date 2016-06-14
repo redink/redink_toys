@@ -19,15 +19,12 @@
 
 -export([test/0]).
 
+-record(node, {root, left, right, rootvalue}).
+
 -define(undef, undefined).
 -define(empty_tree,
-        {node, ?undef, ?undef, ?undef, ?undef}).
--define(only_root(Root, RootValue),
-        {node, Root, ?undef, ?undef, RootValue}).
--define(left_undefined(Root, Right, RootValue),
-        {node, Root, ?undef, Right, RootValue}).
--define(right_undefined(Root, Left, RootValue),
-        {node, Root, Left, ?undef, RootValue}).
+        #node{ root = ?undef
+             , left = ?undef, right = ?undef, rootvalue = ?undef}).
 
 new() ->
     ?empty_tree.
@@ -36,179 +33,190 @@ new(KVList) ->
     lists:foldl(fun({Key, Value}, Acc) -> insert(Acc, {Key, Value}) end,
                 new(), KVList).
 
+insert(?undef, {Key, Value}) ->
+    #node{root = Key, rootvalue = Value};
 insert(?empty_tree, {Key, Value}) ->
-    ?only_root(Key, Value);
-insert({node, Root, Left, Right, _}, {Root, Value}) ->
-    {node, Root, Left, Right, Value};
-insert(?left_undefined(Root, Right, RootValue), {Key, Value}) when Key < Root ->
-    {node, Root, ?only_root(Key, Value), Right, RootValue};
-insert({node, Root, Left, Right, RootValue}, {Key, Value}) when Key < Root ->
-    {node, Root, insert(Left, {Key, Value}), Right, RootValue};
-insert(?right_undefined(Root, Left, RootValue), {Key, Value}) when Key > Root ->
-    {node, Root, Left, ?only_root(Key, Value), RootValue};
-insert({node, Root, Left, Right, RootValue}, {Key, Value}) when Key > Root ->
-    {node, Root, Left, insert(Right, {Key, Value}), RootValue}.
+    #node{root = Key, rootvalue = Value};
+insert(#node{root = Root, left = Left,
+             right = Right} = OldTree, {Key, Value}) ->
+    if
+        Key == Root ->
+            OldTree#node{rootvalue = Value};
+        Key > Root ->
+            OldTree#node{right = insert(Right, {Key, Value})};
+        Key < Root ->
+            OldTree#node{left = insert(Left, {Key, Value})}
+    end.
 
+look(?undef, _) ->
+    [];
 look(?empty_tree, _) ->
     [];
-look({node, Root, _, _, RootValue}, Root) ->
-    [{Root, RootValue}];
-look(?left_undefined(Root, _, _), Key) when Key < Root ->
-    [];
-look({node, Root, Left, _, _}, Key) when Key < Root ->
-    look(Left, Key);
-look(?right_undefined(Root, _, _), Key) when Key > Root ->
-    [];
-look({node, Root, _, Right, _}, Key) when Key > Root ->
-    look(Right, Key).
+look(#node{ root = Root
+          , left = Left
+          , right = Right
+          , rootvalue = RootValue}, Key) ->
+    if
+        Key == Root ->
+            [{Key, RootValue}];
+        Key > Root ->
+            look(Right, Key);
+        Key < Root ->
+            look(Left, Key)
+    end.
 
-min(?left_undefined(Root, _, _)) ->
+min(#node{root = Root, left = ?undef}) ->
     Root;
-min({node, _, Left, _, _}) ->
+min(#node{left = Left}) ->
     min(Left).
 
-max(?right_undefined(Root, _, _)) ->
+max(#node{root = Root, right = ?undef}) ->
     Root;
-max({node, _, _, Right, _}) ->
+max(#node{right = Right}) ->
     max(Right).
 
-rank(?empty_tree, _) ->
-    0;
-rank(?undef, _) ->
-    0;
-rank(?left_undefined(Root, _, _), Root) ->
-    1;
-rank({node, Root, Left, _, _}, Root) ->
-    1 + rank(Left);
-rank(?left_undefined(Root, _, _), Key) when Key < Root ->
-    0;
-rank({node, Root, Left, _, _}, Key) when Key < Root ->
-    rank(Left, Key);
-rank(?right_undefined(Root, Left, _), Key) when Key > Root ->
-    1 + rank(Left, Key);
-rank({node, Root, Left, Right, _}, Key) when Key > Root ->
-    1 + rank(Left, Key) + rank(Right, Key).
-
-rank(?undef) ->
-    0;
-rank(?empty_tree) ->
-    0;
-rank({node, _, Left, Right, _}) ->
+rank(?undef) -> 0;
+rank(?empty_tree) -> 0;
+rank(#node{left = Left, right = Right}) ->
     1 + rank(Left) + rank(Right).
 
-deletemin(?empty_tree = T) ->
-    T;
-deletemin(?left_undefined(_, Right, _)) ->
+rank(?undef, _) -> 0;
+rank(?empty_tree, _) -> 0;
+rank(#node{root = Root, left = Left, right = Right}, Key) ->
+    if
+        Key == Root ->
+            1 + rank(Left);
+        Key > Root ->
+            1 + rank(Left, Key) + rank(Right, Key);
+        Key < Root ->
+            rank(Left, Key)
+    end.
+
+deletemin(?empty_tree) -> ?empty_tree;
+deletemin(#node{left = ?undef, right = Right}) ->
     Right;
-%% left's left is ?undef
-deletemin({node, Root, ?left_undefined(_, LeftRight, _), Right, RootValue}) ->
-    {node, Root, LeftRight, Right, RootValue};
-deletemin({node, Root, Left, Right, RootValue}) ->
-    {node, Root, deletemin(Left), Right, RootValue}.
+deletemin(#node{left = Left} = OldTree) ->
+    case ?undef == Left#node.left of
+        true ->
+            %% found min node
+            OldTree#node{left = Left#node.right};
+        _ ->
+            OldTree#node{left = deletemin(Left)}
+    end.
 
-deletemax(?empty_tree = T) ->
-    T;
-deletemax(?right_undefined(_, Left, _)) ->
+deletemax(?empty_tree) -> ?empty_tree;
+deletemax(#node{right = ?undef, left = Left}) ->
     Left;
-%% right's right is ?undef
-deletemax({node, Root, Left, ?right_undefined(_, RightLeft, _), RootValue}) ->
-    {node, Root, Left, RightLeft, RootValue};
-deletemax({node, Root, Left, Right, RootValue}) ->
-    {node, Root, Left, deletemax(Right), RootValue}.
+deletemax(#node{right = Right} = OldTree) ->
+    case ?undef == Right#node.right of
+        true ->
+            %% found max node
+            OldTree#node{right = Right#node.left};
+        _ ->
+            OldTree#node{right = deletemax(Right)}
+    end.
 
-delete(?empty_tree = T, _) ->
-    T;
-delete(?undef, _) ->
-    ?undef;
-%% delete left, left has no children
-delete({node, Root, ?only_root(Key, _), Right, RootValue}, Key) ->
-    ?left_undefined(Root, Right, RootValue);
-%% delete right, right has no children
-delete({node, Root, Left, ?only_root(Key, _), RootValue}, Key) ->
-    ?right_undefined(Root, Left, RootValue);
-%% delete root, root has no right child
-delete(?right_undefined(Root, Left, _), Root) ->
-    Left;
-delete({node, Root, Left, Right, _}, Root) ->
-    {NewRoot, NewRootValue} = get_min(Right),
-    {node, NewRoot, Left, deletemin(Right), NewRootValue};
-delete({node, Root, Left, Right, RootValue}, Key) when Key > Root ->
-    {node, Root, Left, delete(Right, Key), RootValue};
-delete({node, Root, Left, Right, RootValue}, Key) when Key < Root ->
-    {node, Root, delete(Left, Key), Right, RootValue}.
+delete(T, _) when T == ?empty_tree; T == ?undef -> T;
+delete(#node{root = Root, left = Left, right = Right} = OldTree, Key) ->
+    if
+        Key == Root ->
+            case Right of
+                ?undef -> Left;
+                _      ->
+                    {NewRoot, NewRootValue} = get_min(Right),
+                    OldTree#node{ root = NewRoot
+                                , right = deletemin(Right)
+                                , rootvalue = NewRootValue}
+            end;
+        Key > Root ->
+            OldTree#node{right = delete(Right, Key)};
+        Key < Root ->
+            OldTree#node{left = delete(Left, Key)}
+    end.
 
-get_min(?left_undefined(Root, _, RootValue)) ->
+get_min(#node{root = Root, left = ?undef, rootvalue = RootValue}) ->
     {Root, RootValue};
-get_min({node, _, Left, _, _}) ->
+get_min(#node{left = Left}) ->
     get_min(Left).
 
-floor(?empty_tree, _) ->
-    null;
-floor(?only_root(Root, RootValue), _) ->
-    {Root, RootValue};
-floor({node, Root, _, _, RootValue}, Root) ->
-    {Root, RootValue};
-floor(?left_undefined(Root, _, RootValue), Key) when Key < Root ->
-    {Root, RootValue};
-floor({node, Root, Left, _, _RootValue}, Key) when Key < Root ->
-    floor(Left, Key);
-floor(?right_undefined(Root, _, RootValue), Key) when Key > Root ->
-    {Root, RootValue};
-floor({node, Root, _, Right, RootValue}, Key) when Key > Root ->
-    case min(Right) =< Key of
-        false ->
+%% == prev
+floor(?empty_tree, _) -> null;
+floor(?undef, _)      -> null;
+floor(#node{root = Root, left = Left,
+            right = Right, rootvalue = RootValue}, Key) ->
+    if
+        Key == Root ->
             {Root, RootValue};
-        true ->
-            floor(Right, Key)
+        Key < Root ->
+            floor(Left, Key);
+        Key > Root andalso Right == ?undef ->
+            {Root, RootValue};
+        Key > Root ->
+            case min(Right) > Key of
+                true ->
+                    {Root, RootValue};
+                false ->
+                    floor(Right, Key)
+            end
     end.
 
-ceiling(?empty_tree, _) ->
-    null;
-ceiling(?only_root(Root, RootValue), _) ->
-    {Root, RootValue};
-ceiling({node, Root, _, _, RootValue}, Root) ->
-    {Root, RootValue};
-ceiling(?right_undefined(Root, _, RootValue), Key) when Key > Root ->
-    {Root, RootValue};
-ceiling({node, Root, _, Right, _RootValue}, Key) when Key > Root ->
-    ceiling(Right, Key);
-ceiling(?left_undefined(Root, _, RootValue), Key) when Key < Root ->
-    {Root, RootValue};
-ceiling({node, Root, Left, _, RootValue}, Key) when Key < Root ->
-    case max(Left) >= Key of
-        false ->
+ceiling(?empty_tree, _) -> null;
+ceiling(?undef, _)      -> null;
+ceiling(#node{root = Root, left = Left,
+              right = Right, rootvalue = RootValue}, Key) ->
+    if
+        Key == Root ->
             {Root, RootValue};
-        true ->
-            ceiling(Left, Key)
+        Key > Root ->
+            ceiling(Right, Key);
+        Key < Root andalso Left == ?undef ->
+            {Root, RootValue};
+        Key < Root ->
+            case max(Left) < Key of
+                true ->
+                    {Root, RootValue};
+                false ->
+                    ceiling(Left, Key)
+            end
     end.
 
-prev(?undef) ->
-    [];
-prev(?only_root(Value, _)) ->
-    [Value];
-prev(?right_undefined(Value, Left, _)) ->
-    [Value | prev(Left)];
-prev(?left_undefined(Value, Right, _)) ->
-    [Value | prev(Right)];
-prev({node, Value, Left, Right, _}) ->
-    [Value] ++ prev(Left) ++ prev(Right).
+prev(?undef) -> [];
+prev(#node{root = Root, left = ?undef, right = ?undef}) ->
+    [Root];
+prev(#node{root = Root, left = ?undef, right = Right}) ->
+    [Root | prev(Right)];
+prev(#node{root = Root, left = Left, right = ?undef}) ->
+    [Root | prev(Left)];
+prev(#node{root = Root, left = Left, right = Right}) ->
+    [Root] ++ prev(Left) ++ prev(Right).
 
-mid(?undef) ->
-    [];
-mid(?only_root(Value, _)) ->
-    [Value];
-mid(?right_undefined(Value, Left, _)) ->
-    mid(Left) ++ [Value];
-mid(?left_undefined(Value, Right, _)) ->
-    [Value | mid(Right)];
-mid({node, Value, Left, Right, _}) ->
-    mid(Left) ++ [Value] ++ mid(Right).
+mid(?undef) -> [];
+mid(#node{root = Root, left = Left, right = Right}) ->
+    case {Left, Right} of
+        {?undef, ?undef} ->
+            [Root];
+        {?undef, _} ->
+            [Root | mid(Right)];
+        {_, ?undef} ->
+            mid(Left) ++ [Root];
+        _ ->
+            mid(Left) ++ [Root] ++ mid(Right)
+    end.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 test() ->
-    A = new([{10, 1}, {4, 1}, {5, 1}, {8, 1},
+    A = binarysearchtree:new([{10, 1}, {4, 1}, {5, 1}, {8, 1},
              {11, 1}, {17, 1}, {14, 1}, {19, 1}]),
     [4,5,8,10,11,14,17,19] = mid(A),
+    1   = rank(A, 4),
+    2   = rank(A, 5),
+    3   = rank(A, 8),
+    4   = rank(A, 10),
+    5   = rank(A, 11),
+    6   = rank(A, 14),
+    7   = rank(A, 17),
+    8   = rank(A, 19),
     A1  = deletemin(A  ), [5,8,10,11,14,17,19] = mid(A1),
     A2  = deletemin(A1 ), [8,10,11,14,17,19]  = mid(A2),
     A3  = deletemin(A2 ), [10,11,14,17,19] = mid(A3),
@@ -249,7 +257,7 @@ test() ->
     [4,5,8,10,11,17,19]  = mid(delete(A, 14)),
     [4,5,8,10,11,14,19]  = mid(delete(A, 17)),
     [4,5,8,10,11,14,17]  = mid(delete(A, 19)),
-    {4 , 1} = floor(A, 1),
+    null    = floor(A, 1),
     {4 , 1} = floor(A, 4),
     {5 , 1} = floor(A, 6),
     {11, 1} = floor(A, 12),
@@ -257,6 +265,7 @@ test() ->
     {4 , 1} = ceiling(A, 1),
     {10, 1} = ceiling(A, 9),
     {19, 1} = ceiling(A, 18),
+    null    = ceiling(A, 20),
     [{10, 1}] = look(A, 10),
     [{4 , 1}] = look(A, 4),
     [{5 , 1}] = look(A, 5),
