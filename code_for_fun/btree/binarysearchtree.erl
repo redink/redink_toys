@@ -15,6 +15,7 @@
         , delete/2
         , floor/2
         , ceiling/2
+        , is_binarysearchtree/1
         ]).
 
 -export([test/0]).
@@ -203,6 +204,21 @@ mid(#node{root = Root, left = Left, right = Right}) ->
             mid(Left) ++ [Root] ++ mid(Right)
     end.
 
+is_binarysearchtree(T) when T == ?undef; T == ?empty_tree -> true;
+is_binarysearchtree(#node{left = Left,
+                          right = Right, root = Root}) ->
+    case {Left, Right} of
+        {?undef, ?undef} ->
+            true;
+        {?undef, _} ->
+            Root < Right#node.root andalso is_binarysearchtree(Right);
+        {_, ?undef} ->
+            Root > Left#node.root andalso is_binarysearchtree(Left);
+        _ ->
+            Root > Left#node.root andalso Root < Right#node.root
+                andalso is_binarysearchtree(Left) andalso is_binarysearchtree(Right)
+    end.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 test() ->
@@ -217,22 +233,22 @@ test() ->
     6   = rank(A, 14),
     7   = rank(A, 17),
     8   = rank(A, 19),
-    A1  = deletemin(A  ), [5,8,10,11,14,17,19] = mid(A1),
-    A2  = deletemin(A1 ), [8,10,11,14,17,19]  = mid(A2),
-    A3  = deletemin(A2 ), [10,11,14,17,19] = mid(A3),
-    A4  = deletemin(A3 ), [11,14,17,19] = mid(A4),
-    A5  = deletemin(A4 ), [14,17,19] = mid(A5),
-    A6  = deletemin(A5 ), [17,19] = mid(A6),
-    A7  = deletemin(A6 ), [19] = mid(A7),
-    A8  = deletemin(A7 ), [] = mid(A8),
-    A01 = deletemax(A  ), [4,5,8,10,11,14,17] = mid(A01),
-    A02 = deletemax(A01), [4,5,8,10,11,14] = mid(A02),
-    A03 = deletemax(A02), [4,5,8,10,11] = mid(A03),
-    A04 = deletemax(A03), [4,5,8,10] = mid(A04),
-    A05 = deletemax(A04), [4,5,8] = mid(A05),
-    A06 = deletemax(A05), [4,5] = mid(A06),
-    A07 = deletemax(A06), [4] = mid(A07),
-    A08 = deletemax(A07), [] = mid(A08),
+    A1  = deletemin(A  ), [5,8,10,11,14,17,19] = mid(A1), true = is_binarysearchtree(A1),
+    A2  = deletemin(A1 ), [8,10,11,14,17,19]  = mid(A2), true = is_binarysearchtree(A2),
+    A3  = deletemin(A2 ), [10,11,14,17,19] = mid(A3), true = is_binarysearchtree(A3),
+    A4  = deletemin(A3 ), [11,14,17,19] = mid(A4), true = is_binarysearchtree(A4),
+    A5  = deletemin(A4 ), [14,17,19] = mid(A5), true = is_binarysearchtree(A5),
+    A6  = deletemin(A5 ), [17,19] = mid(A6), true = is_binarysearchtree(A6),
+    A7  = deletemin(A6 ), [19] = mid(A7), true = is_binarysearchtree(A7),
+    A8  = deletemin(A7 ), [] = mid(A8), true = is_binarysearchtree(A8),
+    A01 = deletemax(A  ), [4,5,8,10,11,14,17] = mid(A01), true = is_binarysearchtree(A01),
+    A02 = deletemax(A01), [4,5,8,10,11,14] = mid(A02), true = is_binarysearchtree(A02),
+    A03 = deletemax(A02), [4,5,8,10,11] = mid(A03), true = is_binarysearchtree(A03),
+    A04 = deletemax(A03), [4,5,8,10] = mid(A04), true = is_binarysearchtree(A04),
+    A05 = deletemax(A04), [4,5,8] = mid(A05), true = is_binarysearchtree(A05),
+    A06 = deletemax(A05), [4,5] = mid(A06), true = is_binarysearchtree(A06),
+    A07 = deletemax(A06), [4] = mid(A07), true = is_binarysearchtree(A07),
+    A08 = deletemax(A07), [] = mid(A08), true = is_binarysearchtree(A08),
     4  = min(A ),
     5  = min(A1),
     8  = min(A2),
