@@ -18,7 +18,10 @@ new(KVList) ->
 
 insert(OldTree, {Key, Value}) when OldTree == ?empty_tree; OldTree == ?undef ->
     #node{root = Key, rootvalue = Value, height = 1};
-insert(#node{root = Root, left = Left, right = Right} = OldTree, {Key, Value}) ->
+insert(#node{ root = Root
+            , left = Left
+            , right = Right} = OldTree,
+       {Key, Value}) ->
     if
         Key == Root ->
             OldTree#node{rootvalue = Value};
@@ -40,7 +43,11 @@ deletemin(#node{left = Left} = OldTree) ->
     end.
 
 delete(T, _) when T == ?empty_tree; T == ?undef -> T;
-delete(#node{root = Root, left = Left, right = Right} = OldTree, Key) ->
+delete(#node{ root = Root
+            , left = Left
+            , right = Right
+            } = OldTree,
+       Key) ->
     if
         Key == Root ->
             case Right of
@@ -58,12 +65,17 @@ delete(#node{root = Root, left = Left, right = Right} = OldTree, Key) ->
             update_tree(OldTree#node{left = delete(Left, Key)}, delete_left)
     end.
 
-get_min(#node{root = Root, left = ?undef, rootvalue = RootValue}) ->
+get_min(#node{ root = Root
+             , left = ?undef
+             , rootvalue = RootValue}) ->
     {Root, RootValue};
 get_min(#node{left = Left}) ->
     get_min(Left).
 
-update_tree(#node{left = Left, right = Right} = Tree, delete_left) ->
+update_tree(#node{ left = Left
+                 , right = Right
+                 } = Tree,
+            delete_left) ->
     case height(Right) - height(Left) == 2 of
         true ->
             case height(Right#node.left) > height(Right#node.right) of
@@ -75,7 +87,10 @@ update_tree(#node{left = Left, right = Right} = Tree, delete_left) ->
         false ->
             update_height(Tree)
     end;
-update_tree(#node{left = Left, right = Right} = Tree, delete_right) ->
+update_tree(#node{ left = Left
+                 , right = Right
+                 } = Tree,
+            delete_right) ->
     case height(Left) - height(Right) == 2 of
         true ->
             case height(Left#node.right) > height(Left#node.left) of
@@ -88,7 +103,10 @@ update_tree(#node{left = Left, right = Right} = Tree, delete_right) ->
             update_height(Tree)
     end.
 
-update_tree(#node{left = Left, right = Right} = Tree, Key, left) ->
+update_tree(#node{ left = Left
+                 , right = Right
+                 } = Tree,
+            Key, left) ->
     case height(Left) - height(Right) == 2 of
         true ->
             if
